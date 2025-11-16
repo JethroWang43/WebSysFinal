@@ -1,0 +1,97 @@
+:root{
+    --bg: #F5F7F8;
+    --accent: #F4CE14; /* yellow */
+    --accent-2: #379777; /* green */
+    --muted: #45474B; /* dark gray */
+}
+
+html,body{
+    height:100%;
+}
+body{
+    background-color: var(--bg);
+    color: var(--muted);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Sidebar */
+nav.bg-light{
+    background: #ffffff; /* keep sidebar white */
+}
+nav .nav-link{
+    color: var(--muted);
+}
+nav .nav-link.active, nav .nav-link:hover{
+    background: linear-gradient(90deg, rgba(55,151,119,0.08), rgba(244,206,20,0.04));
+    color: var(--accent-2);
+    border-radius: 6px;
+}
+nav a.fs-4{
+    color: var(--muted);
+    font-weight:600;
+}
+
+/* Main content */
+.card{
+    border: 0;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(69,71,75,0.04);
+}
+
+.card .card-body h3, .card .card-body h4{
+    color: var(--muted);
+}
+
+/* Stat cards */
+.card.p-3 { background: #fff; }
+
+.badge.bg-success{
+    background-color: var(--accent-2) !important;
+}
+.badge.bg-warning{
+    background-color: var(--accent) !important;
+    color: #222 !important;
+}
+.badge.bg-danger{
+    background-color: #e76b6b !important;
+}
+
+/* Buttons */
+.btn-primary{
+    background-color: var(--accent-2);
+    border-color: var(--accent-2);
+}
+.btn-primary:hover{
+    background-color: #2e7a66;
+    border-color: #2e7a66;
+}
+
+/* Table headers */
+table thead.table-light th{
+    background: transparent;
+    color: var(--muted);
+    font-weight:600;
+}
+
+/* Quick link card on homepage */
+.card .p-3.border.rounded{
+    background: #fff;
+    border-radius: 8px;
+    transition: box-shadow .15s ease, transform .08s ease;
+}
+.card .p-3.border.rounded:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(69,71,75,0.06);
+}
+
+/* Pagination */
+.pagination .page-item.active .page-link{
+    background-color: var(--accent-2);
+    border-color: var(--accent-2);
+}
+
+/* Small responsive tweaks */
+@media (max-width: 767px){
+    nav.bg-light{ position: relative; width:100%; height:auto; }
+    .flex-fill{ padding: 1rem !important; }
+}
