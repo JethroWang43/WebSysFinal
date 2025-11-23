@@ -8,8 +8,35 @@ use CodeIgniter\Router\RouteCollection;
 
 // Normalize requests that accidentally include the subdirectory twice
 // Example: /ITSO/tw32/ITSO/tw32/users  -> redirect to /ITSO/tw32/users
-$routes->addRedirect('ITSO/tw32/ITSO/tw32', 'ITSO/tw32');
-$routes->addRedirect('ITSO/tw32/ITSO/tw32(:any)', 'ITSO/tw32$1');
+// NOTE: The original redirect rules caused a redirect loop in some
+// environments because the redirect target was resolved via `site_url()`
+// and `App::$baseURL` already contains the project subdirectory. To handle
+// incoming requests that accidentally include the subdirectory twice
+// (e.g. `/ITSO/tw32/ITSO/tw32/reservations/...`) we add small closure
+// routes that compute a cleaned, absolute target and redirect there.
+// These avoid calling `addRedirect()` with a relative target which
+// previously produced the duplicated path.
+
+// Redirect the exact duplicated root: /ITSO/tw32/ITSO/tw32  -> base site
+$routes->add('ITSO/tw32/ITSO/tw32', static function() {
+	return redirect()->to(site_url('/'));
+});
+
+// Redirect any URI that has the duplicated prefix by removing the
+// extra `/ITSO/tw32` segment and redirecting to the cleaned path.
+$routes->add('ITSO/tw32/ITSO/tw32(:any)', static function($path = '') {
+	// $path may start with a leading slash. Remove it and redirect
+	// to the path relative to the application's baseURL so `site_url`
+	// produces a proper absolute URL without duplicating segments.
+	$clean = ltrim((string) $path, '/');
+
+	// If nothing left, send to site's base URL.
+	if ($clean === '') {
+		return redirect()->to(site_url('/'));
+	}
+
+	return redirect()->to(site_url($clean));
+});
 
 // Support requests coming in with the project subdirectory in the URI
 // Map requests that include the project subdirectory prefix to the same controllers
@@ -54,6 +81,9 @@ $routes->group('ITSO/tw32', static function($routes) {
 	// reschedule routes for reservations (show form and submit)
 	$routes->get('reservations/reschedule/(:num)', 'Reservations::reschedule/$1');
 	$routes->post('reservations/rescheduleSubmit', 'Reservations::rescheduleSubmit');
+
+	// Reports under prefixed path
+	$routes->get('reports', 'Reports::index');
 });
 
 // Routes for Index controller

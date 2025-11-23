@@ -4,8 +4,14 @@
 	<?php if (session()->getFlashdata('success')): ?>
 		<div class="alert alert-success"><?= session()->getFlashdata('success') ?></div>
 	<?php endif; ?>
-	<?php if (session()->getFlashdata('error')): ?>
-		<div class="alert alert-danger"><?= session()->getFlashdata('error') ?></div>
+	<?php if (session()->has('errors')): ?>
+		<div class="alert alert-danger">
+			<ul class="mb-0">
+				<?php foreach (session('errors') as $err): ?>
+					<li><?= esc($err) ?></li>
+				<?php endforeach; ?>
+			</ul>
+		</div>
 	<?php endif; ?>
 
 	<form method="post" action="<?= base_url('equipment/insert') ?>">
@@ -14,7 +20,9 @@
 			<label class="form-label">Equipment ID (optional)</label>
 			<input class="form-control" name="equipment_id" placeholder="EQ-XXX or leave blank to auto-generate"
 				value="<?= old('equipment_id') ?>" />
-			<?php if (isset($validation) && $validation->hasError('equipment_id')): ?>
+			<?php if (session()->has('errors') && isset(session('errors')['equipment_id'])): ?>
+				<div class="text-danger small mt-1"><?= esc(session('errors')['equipment_id']) ?></div>
+			<?php elseif (isset($validation) && $validation->hasError('equipment_id')): ?>
 				<div class="text-danger small mt-1"><?= esc($validation->getError('equipment_id')) ?></div>
 			<?php endif; ?>
 		</div>
@@ -22,7 +30,9 @@
 		<div class="mb-3">
 			<label class="form-label">Name</label>
 			<input class="form-control" name="name" value="<?= old('name') ?>" />
-			<?php if (isset($validation) && $validation->hasError('name')): ?>
+			<?php if (session()->has('errors') && isset(session('errors')['name'])): ?>
+				<div class="text-danger small mt-1"><?= esc(session('errors')['name']) ?></div>
+			<?php elseif (isset($validation) && $validation->hasError('name')): ?>
 				<div class="text-danger small mt-1"><?= esc($validation->getError('name')) ?></div>
 			<?php endif; ?>
 		</div>
@@ -30,7 +40,9 @@
 		<div class="mb-3">
 			<label class="form-label">Description</label>
 			<input class="form-control" name="description" value="<?= old('description') ?>" />
-			<?php if (isset($validation) && $validation->hasError('description')): ?>
+			<?php if (session()->has('errors') && isset(session('errors')['description'])): ?>
+				<div class="text-danger small mt-1"><?= esc(session('errors')['description']) ?></div>
+			<?php elseif (isset($validation) && $validation->hasError('description')): ?>
 				<div class="text-danger small mt-1"><?= esc($validation->getError('description')) ?></div>
 			<?php endif; ?>
 		</div>
@@ -64,7 +76,9 @@
 				</option>
 				<option value="other" <?= ($old_category == 'other' ? 'selected' : '') ?>>Other</option>
 			</select>
-			<?php if (isset($validation) && $validation->hasError('category')): ?>
+			<?php if (session()->has('errors') && isset(session('errors')['category'])): ?>
+				<div class="text-danger small mt-1"><?= esc(session('errors')['category']) ?></div>
+			<?php elseif (isset($validation) && $validation->hasError('category')): ?>
 				<div class="text-danger small mt-1"><?= esc($validation->getError('category')) ?></div>
 			<?php endif; ?>
 		</div>
@@ -83,7 +97,9 @@
 		<div class="mb-3">
 			<label class="form-label">Location</label>
 			<input class="form-control" name="location" value="<?= old('location', 'ITSO') ?>" />
-			<?php if (isset($validation) && $validation->hasError('location')): ?>
+			<?php if (session()->has('errors') && isset(session('errors')['location'])): ?>
+				<div class="text-danger small mt-1"><?= esc(session('errors')['location']) ?></div>
+			<?php elseif (isset($validation) && $validation->hasError('location')): ?>
 				<div class="text-danger small mt-1"><?= esc($validation->getError('location')) ?></div>
 			<?php endif; ?>
 		</div>

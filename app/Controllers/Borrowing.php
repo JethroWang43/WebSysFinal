@@ -263,8 +263,9 @@ class Borrowing extends BaseController
         ];
 
         if (!$this->validate($rules, $messages)) {
-            // This is the correct way to pass validation errors to the next request (the view)
-            return redirect()->back()->withInput()->with('validation', $this->validator);
+            // Use session flashdata to pass validation errors consistently across the app
+            $session->setFlashdata('errors', $this->validator->getErrors());
+            return redirect()->back()->withInput();
         }
 
         // ----------------------------
@@ -335,6 +336,11 @@ class Borrowing extends BaseController
         $id = (int) $id;
         if (isset($borrows[$id])) {
             $equipmentId = $borrows[$id]['equipment_id'];
+            // mark returned metadata so views/reports can detect returned items
+            $borrows[$id]['date_returned'] = date('Y-m-d');
+            $borrows[$id]['returned'] = 1;
+            $borrows[$id]['returned_at'] = date('Y-m-d H:i:s');
+
             // move to history
             $history[] = $borrows[$id];
             unset($borrows[$id]);

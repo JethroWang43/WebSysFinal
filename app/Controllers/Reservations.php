@@ -186,7 +186,8 @@ class Reservations extends BaseController
 
         // If validation fails → return with errors + old input
         if (!$this->validate($rules, $messages)) {
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+            session()->setFlashdata('errors', $this->validator->getErrors());
+            return redirect()->back()->withInput();
         }
 
         // ----------------------------
@@ -406,7 +407,9 @@ class Reservations extends BaseController
         ];
 
         if (!$this->validate($rules, $messages)) {
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+            // Use session flashdata for consistency
+            session()->setFlashdata('errors', $this->validator->getErrors());
+            return redirect()->back()->withInput();
         }
 
         $id = (int) $this->request->getPost('id');

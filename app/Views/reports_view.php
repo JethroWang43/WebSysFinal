@@ -22,10 +22,11 @@
     try {
         foreach ($equipment_items as $item) {
             $status = strtolower($item['status'] ?? 'available');
-            if ($status !== 'unusable') {
-                $activeCount++;
-            } else {
+            // Treat 'maintenance' the same as 'unusable' for reporting purposes
+            if ($status === 'unusable' || $status === 'maintenance') {
                 $unusableCount++;
+            } else {
+                $activeCount++;
             }
         }
     } catch (\Throwable $e) {
@@ -117,7 +118,8 @@
                         <tbody>
                             <?php if ($reportType === 'active_equipment' || $reportType === 'unusable_equipment'): ?>
                                 <?php foreach ($reportData as $item): ?>
-                                    <tr class="<?= strtolower($item['status'] ?? '') === 'unusable' ? 'table-danger' : '' ?>">
+                                    <?php $rs = strtolower($item['status'] ?? ''); ?>
+                                    <tr class="<?= ($rs === 'unusable' || $rs === 'reserved') ? 'table-danger' : ($rs === 'maintenance' ? 'table-secondary' : '') ?>">
                                         <td><?= esc($item['equipment_id'] ?? $item['id']) ?></td>
                                         <td><strong><?= esc($item['name'] ?? '') ?></strong>
                                             <div class="text-muted small"><?= esc($item['description'] ?? '') ?></div>
@@ -125,8 +127,8 @@
                                         <td><?= esc($item['category'] ?? '') ?></td>
                                         <td><?= esc($item['location'] ?? '') ?></td>
                                         <td>
-                                            <span
-                                                class="badge bg-<?= strtolower($item['status'] ?? '') === 'available' ? 'success' : (strtolower($item['status'] ?? '') === 'unusable' ? 'danger' : 'warning') ?>">
+                                            <?php $st = strtolower($item['status'] ?? ''); ?>
+                                            <span class="badge bg-<?= $st === 'available' ? 'success' : ($st === 'unusable' || $st === 'reserved' ? 'danger' : ($st === 'maintenance' ? 'secondary' : 'warning')) ?>">
                                                 <?= esc($item['status'] ?? 'N/A') ?>
                                             </span>
                                         </td>
@@ -136,14 +138,30 @@
                             <?php elseif ($reportType === 'user_borrowing_history'): ?>
                                 <?php foreach ($reportData as $record):
                                     $equip = $equipment_items[$record['equipment_id']] ?? [];
-                                    $isReturned = !isset($record['due_date']); // Simplified check: if it has no due_date, assume it's a history record
-                                    $isOverdue = false;
-                                    $statusLabel = 'Returned';
-                                    $statusClass = 'success';
+                                    // Determine if this borrow has been returned. Support several common schema fields:
+                                    // - date_returned: timestamp when returned
+                                    // - returned: boolean flag
+                                    // - status: explicit 'returned' value
+                                    $isReturned = false;
+                                    if (!empty($record['date_returned'])) {
+                                        $isReturned = true;
+                                    } elseif (!empty($record['returned_at']) || !empty($record['returned_on']) || !empty($record['return_date']) || !empty($record['returned_date'])) {
+                                        $isReturned = true;
+                                    } elseif (!empty($record['returned']) && ($record['returned'] === true || $record['returned'] === '1' || $record['returned'] === 1)) {
+                                        $isReturned = true;
+                                    } elseif (!empty($record['status']) && strtolower($record['status']) === 'returned') {
+                                        $isReturned = true;
+                                    }
 
-                                    if (!$isReturned) {
-                                        $statusLabel = 'Active';
-                                        $statusClass = 'primary';
+                                    $isOverdue = false;
+                                    $statusLabel = 'Active';
+                                    $statusClass = 'primary';
+
+                                    // If already returned, show Returned and don't compute due/overdue
+                                    if ($isReturned) {
+                                        $statusLabel = 'Returned';
+                                        $statusClass = 'success';
+                                    } else {
                                         if (!empty($record['due_date'])) {
                                             try {
                                                 $now = new \DateTime();

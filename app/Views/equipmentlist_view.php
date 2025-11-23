@@ -74,7 +74,9 @@
                                             <span class="badge bg-success">Available</span>
                                         <?php elseif ($st === 'borrowed'): ?>
                                             <span class="badge bg-warning text-dark">Borrowed</span>
-                                        <?php elseif ($st === 'maintenance' || $st === 'reserved'): ?>
+                                        <?php elseif ($st === 'maintenance'): ?>
+                                            <span class="badge bg-secondary">Maintenance</span>
+                                        <?php elseif ($st === 'reserved'): ?>
                                             <span class="badge bg-danger">Reserved</span>
                                         <?php else: ?>
                                             <span class="badge bg-secondary"><?= esc(ucfirst($item['status'] ?? 'Unknown')) ?></span>

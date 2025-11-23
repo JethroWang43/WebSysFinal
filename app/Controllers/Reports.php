@@ -62,8 +62,9 @@ class Reports extends BaseController
             case 'active_equipment':
                 $reportTitle = 'Active Equipment List';
                 foreach ($equipment_items as $item) {
-                    // Active equipment: Status is NOT 'Unusable'
-                    if (strtolower($item['status'] ?? 'available') !== 'unusable') {
+                    // Active equipment: Status is NOT 'Unusable' or 'Maintenance'
+                    $s = strtolower($item['status'] ?? 'available');
+                    if ($s !== 'unusable' && $s !== 'maintenance') {
                         $hay = strtolower(($item['name'] ?? '') . ' ' . ($item['equipment_id'] ?? '') . ' ' . ($item['description'] ?? ''));
                         if ($q === '' || stripos($hay, strtolower($q)) !== false) {
                             $reportData[] = $item;
@@ -75,8 +76,9 @@ class Reports extends BaseController
             case 'unusable_equipment':
                 $reportTitle = 'Unusable Equipment Report';
                 foreach ($equipment_items as $item) {
-                    // Unusable equipment: Status IS 'Unusable'
-                    if (strtolower($item['status'] ?? '') === 'unusable') {
+                    // Unusable equipment: Status IS 'Unusable' or 'Maintenance'
+                    $s = strtolower($item['status'] ?? '');
+                    if ($s === 'unusable' || $s === 'maintenance') {
                         $hay = strtolower(($item['name'] ?? '') . ' ' . ($item['equipment_id'] ?? '') . ' ' . ($item['description'] ?? ''));
                         if ($q === '' || stripos($hay, strtolower($q)) !== false) {
                             $reportData[] = $item;
@@ -90,14 +92,26 @@ class Reports extends BaseController
                 $history = $session->get('borrow_history') ?? [];
                 // Include active borrows in the history view for completeness
                 $activeBorrows = $session->get('borrows') ?? [];
-                $allBorrowRecords = array_merge($history, $activeBorrows);
 
-                foreach ($allBorrowRecords as $record) {
+                // First include history records and mark them as returned (for older records without explicit return metadata)
+                foreach ($history as $record) {
+                    // ensure returned metadata so the view shows 'Returned'
+                    if (empty($record['date_returned']) && empty($record['returned'])) {
+                        $record['returned'] = 1;
+                    }
                     $hay = strtolower(($record['borrower_name'] ?? '') . ' ' . ($record['id_number'] ?? '') . ' ' . ($record['ref'] ?? ''));
-                    // Look up equipment name for better search matching
                     $equipment = $equipment_items[$record['equipment_id']] ?? [];
                     $hay .= ' ' . strtolower($equipment['name'] ?? '');
+                    if ($q === '' || stripos($hay, strtolower($q)) !== false) {
+                        $reportData[] = $record;
+                    }
+                }
 
+                // Then include currently active borrows
+                foreach ($activeBorrows as $record) {
+                    $hay = strtolower(($record['borrower_name'] ?? '') . ' ' . ($record['id_number'] ?? '') . ' ' . ($record['ref'] ?? ''));
+                    $equipment = $equipment_items[$record['equipment_id']] ?? [];
+                    $hay .= ' ' . strtolower($equipment['name'] ?? '');
                     if ($q === '' || stripos($hay, strtolower($q)) !== false) {
                         $reportData[] = $record;
                     }

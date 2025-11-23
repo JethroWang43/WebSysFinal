@@ -12,12 +12,20 @@
         <div class="alert alert-danger"><?= session()->getFlashdata('error') ?></div>
     <?php endif; ?>
 
-    <?php 
-    // Display general errors (if any)
-    if ($validation->getErrors()): 
+    <?php
+    // Prefer session flash 'errors' (set by controllers) but fall back to the validation service
+    $flashErrors = session()->getFlashdata('errors') ?? null;
+    if (!empty($flashErrors)):
     ?>
         <div class="alert alert-danger mb-3">
-            <!-- Displays general errors not tied to a specific field (or all errors) -->
+            <ul class="mb-0">
+            <?php foreach ($flashErrors as $f): ?>
+                <li><?= esc($f) ?></li>
+            <?php endforeach; ?>
+            </ul>
+        </div>
+    <?php elseif ($validation->getErrors()): ?>
+        <div class="alert alert-danger mb-3">
             <?= $validation->listErrors() ?>
         </div>
     <?php endif; ?>
@@ -39,7 +47,11 @@
                     </option>
                 <?php endforeach; ?>
             </select>
-            <?php if ($validation->hasError('equipment_id')): ?>
+            <?php if (!empty($flashErrors) && isset($flashErrors['equipment_id'])): ?>
+                <div class="text-danger small mt-1">
+                    <?= esc($flashErrors['equipment_id']) ?>
+                </div>
+            <?php elseif ($validation->hasError('equipment_id')): ?>
                 <div class="text-danger small mt-1">
                     <?= esc($validation->getError('equipment_id')) ?>
                 </div>
@@ -67,7 +79,11 @@
                     </option>
                 <?php endforeach; ?>
             </select>
-            <?php if ($validation->hasError('user_id')): ?>
+            <?php if (!empty($flashErrors) && isset($flashErrors['user_id'])): ?>
+                <div class="text-danger small mt-1">
+                    <?= esc($flashErrors['user_id']) ?>
+                </div>
+            <?php elseif ($validation->hasError('user_id')): ?>
                 <div class="text-danger small mt-1">
                     <?= esc($validation->getError('user_id')) ?>
                 </div>
@@ -78,7 +94,11 @@
             <label class=" form-label required">Borrower Name (Auto-filled)</label>
             <input class="form-control" name="borrower_name" id="borrower_name" placeholder="Auto-filled from
                 selection" value="<?= old('borrower_name') ?>" readonly />
-            <?php if ($validation->hasError('borrower_name')): ?>
+            <?php if (!empty($flashErrors) && isset($flashErrors['borrower_name'])): ?>
+                <div class="text-danger small mt-1">
+                    <?= esc($flashErrors['borrower_name']) ?>
+                </div>
+            <?php elseif ($validation->hasError('borrower_name')): ?>
                 <div class="text-danger small mt-1">
                     <?= esc($validation->getError('borrower_name')) ?>
                 </div>
@@ -89,7 +109,11 @@
             <label class="form-label">ID Number (Auto-filled)</label>
             <input class="form-control" name="id_number" id="id_number" placeholder="Auto-filled from selection" value="
                 <?= old('id_number') ?>" readonly />
-            <?php if ($validation->hasError('id_number')): ?>
+            <?php if (!empty($flashErrors) && isset($flashErrors['id_number'])): ?>
+                <div class="text-danger small mt-1">
+                    <?= esc($flashErrors['id_number']) ?>
+                </div>
+            <?php elseif ($validation->hasError('id_number')): ?>
                 <div class="text-danger small mt-1">
                     <?= esc($validation->getError('id_number')) ?>
                 </div>
@@ -104,7 +128,11 @@
             $due_date_value = old('due_date', $default_date);
             ?>
             <input class="form-control" type="date" name="due_date" value="<?= esc($due_date_value) ?>" />
-            <?php if ($validation->hasError('due_date')): ?>
+            <?php if (!empty($flashErrors) && isset($flashErrors['due_date'])): ?>
+                <div class="text-danger small mt-1">
+                    <?= esc($flashErrors['due_date']) ?>
+                </div>
+            <?php elseif ($validation->hasError('due_date')): ?>
                 <div class="text-danger small mt-1">
                     <?= esc($validation->getError('due_date')) ?>
                 </div>
@@ -115,7 +143,11 @@
             <label class="form-label">Location of Use</label>
             <input class="form-control" name="use_location" placeholder="e.g., Room 301, Auditorium"
                 value="<?= old('use_location') ?>" />
-            <?php if ($validation->hasError('use_location')): ?>
+            <?php if (!empty($flashErrors) && isset($flashErrors['use_location'])): ?>
+                <div class="text-danger small mt-1">
+                    <?= esc($flashErrors['use_location']) ?>
+                </div>
+            <?php elseif ($validation->hasError('use_location')): ?>
                 <div class="text-danger small mt-1">
                     <?= esc($validation->getError('use_location')) ?>
                 </div>

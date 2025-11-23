@@ -51,5 +51,15 @@ class Validation extends BaseConfig
         'email' => 'required|valid_email',
     ];
 
+    // Rules for equipment add/update
+    public array $equipment = [
+        'equipment_id' => 'permit_empty|alpha_dash',
+        'name' => 'required|min_length[3]',
+        'description' => 'permit_empty',
+        'category' => 'required',
+        'status' => 'required|in_list[Available,Borrowed,Maintenance,Reserved]',
+        'location' => 'permit_empty',
+    ];
+
 
 }

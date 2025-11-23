@@ -5,6 +5,19 @@
             <?php if (session('info')): ?>
                 <div class="alert alert-info"><?= session('info') ?></div>
             <?php endif; ?>
+
+            <?php if (session()->has('success')): ?>
+                <div class="alert alert-success"><?= session('success') ?></div>
+            <?php endif; ?>
+            <?php if (session()->has('errors')): ?>
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        <?php foreach (session('errors') as $err): ?>
+                            <li><?= esc($err) ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
         <div class="mb-3">
             <label class="form-label">Equipment ID</label>
             <input class="form-control" name="equipment_id" value="<?= esc($item['equipment_id']) ?>" />

@@ -112,7 +112,31 @@ class Equipment extends BaseController {
             'last_updated' => $now,
         ];
 
+        // Validation rules/messages
+        $rules = [
+            'equipment_id' => 'permit_empty|alpha_dash',
+            'name' => 'required|min_length[3]',
+            'description' => 'permit_empty',
+            'category' => 'required',
+            'status' => 'required|in_list[Available,Borrowed,Maintenance,Reserved]',
+            'location' => 'required|min_length[2]',
+        ];
+
+        $messages = [
+            'equipment_id' => ['alpha_dash' => 'Equipment ID may contain only letters, numbers, dashes and underscores.'],
+            'name' => ['required' => 'Please enter a name.', 'min_length' => 'Please enter a name (at least 3 characters).'],
+            'category' => ['required' => 'Please select a category.'],
+            'status' => ['required' => 'Please select a status.', 'in_list' => 'Invalid status selected.'],
+            'location' => ['required' => 'Location is required.'],
+        ];
+
+        if (! $this->validate($rules, $messages)) {
+            session()->setFlashdata('errors', $this->validator->getErrors());
+            return redirect()->to('equipment/add')->withInput();
+        }
+
         $this->model->insert($data);
+        session()->setFlashdata('success', 'Adding new equipment is successful.');
 
         return redirect()->to('equipment');
     }
@@ -175,7 +199,29 @@ class Equipment extends BaseController {
             'last_updated' => $now,
         ];
 
+        $rules = [
+            'equipment_id' => 'permit_empty|alpha_dash',
+            'name' => 'required|min_length[3]',
+            'description' => 'permit_empty',
+            'category' => 'required',
+            'status' => 'required|in_list[Available,Borrowed,Maintenance,Reserved]',
+            'location' => 'required|min_length[2]',
+        ];
+
+        $messages = [
+            'name' => ['required' => 'Please enter a name.'],
+            'category' => ['required' => 'Please select a category.'],
+            'status' => ['required' => 'Please select a status.'],
+            'location' => ['required' => 'Location is required.'],
+        ];
+
+        if (! $this->validate($rules, $messages)) {
+            session()->setFlashdata('errors', $this->validator->getErrors());
+            return redirect()->to('equipment/edit/' . $id)->withInput();
+        }
+
         $this->model->update($id, $data);
+        session()->setFlashdata('success', 'Equipment updated successfully.');
 
         return redirect()->to('equipment');
     }
