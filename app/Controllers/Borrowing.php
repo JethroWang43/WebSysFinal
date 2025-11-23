@@ -1,11 +1,12 @@
 <?php
 namespace App\Controllers;
 
-class Borrowing extends BaseController {
+class Borrowing extends BaseController
+{
     protected function ensureBorrowData()
     {
         $session = session();
-        if (! $session->has('borrows')) {
+        if (!$session->has('borrows')) {
             $session->set('borrows', []);
             $session->set('borrows_next_id', 1);
             // history for returned items
@@ -41,10 +42,11 @@ class Borrowing extends BaseController {
         $overdue = 0;
         $pending = 0; // due within 7 days
         foreach ($borrows as $b) {
-            if (empty($b['due_date'])) continue;
+            if (empty($b['due_date']))
+                continue;
             try {
                 $due = new \DateTime($b['due_date']);
-                $diff = (int)$now->diff($due)->format('%r%a');
+                $diff = (int) $now->diff($due)->format('%r%a');
                 if ($diff < 0) {
                     $overdue++;
                 } elseif ($diff <= 7) {
@@ -71,7 +73,7 @@ class Borrowing extends BaseController {
             $equipName = '';
             $equipIdLabel = '';
             $equipDesc = '';
-            if (! empty($equipment) && isset($equipment[$b['equipment_id']])) {
+            if (!empty($equipment) && isset($equipment[$b['equipment_id']])) {
                 $ei = $equipment[$b['equipment_id']];
                 $equipName = strtolower($ei['name'] ?? '');
                 $equipIdLabel = strtolower($ei['equipment_id'] ?? '');
@@ -90,20 +92,24 @@ class Borrowing extends BaseController {
             $matchStatus = true;
             if ($statusFilter !== '' && $statusFilter !== 'all') {
                 $matchStatus = false;
-                if (! empty($b['due_date'])) {
+                if (!empty($b['due_date'])) {
                     try {
                         $now = new \DateTime();
                         $due = new \DateTime($b['due_date']);
-                        $diff = (int)$now->diff($due)->format('%r%a');
-                            if ($statusFilter === 'overdue' && $diff < 0) $matchStatus = true;
-                            if ($statusFilter === 'due_soon' && $diff >= 0 && $diff <= 7) $matchStatus = true;
-                            if ($statusFilter === 'active' && $diff >= 0) $matchStatus = true;
+                        $diff = (int) $now->diff($due)->format('%r%a');
+                        if ($statusFilter === 'overdue' && $diff < 0)
+                            $matchStatus = true;
+                        if ($statusFilter === 'due_soon' && $diff >= 0 && $diff <= 7)
+                            $matchStatus = true;
+                        if ($statusFilter === 'active' && $diff >= 0)
+                            $matchStatus = true;
                     } catch (\Exception $e) {
                         // ignore parse errors
                     }
                 }
             }
-            if (! $matchStatus) continue;
+            if (!$matchStatus)
+                continue;
 
             $filtered[] = $b;
         }
@@ -111,11 +117,13 @@ class Borrowing extends BaseController {
         // Pagination for borrows
         $perPage = 6;
         $page = (int) ($this->request->getGet('page') ?? 1);
-        if ($page < 1) $page = 1;
+        if ($page < 1)
+            $page = 1;
         $all = array_values($filtered);
         $totalFiltered = count($all);
         $pages = max(1, (int) ceil($totalFiltered / $perPage));
-        if ($page > $pages) $page = $pages;
+        if ($page > $pages)
+            $page = $pages;
         $offset = ($page - 1) * $perPage;
         $paged = array_slice($all, $offset, $perPage);
 
@@ -137,9 +145,9 @@ class Borrowing extends BaseController {
         ];
 
         return view('include\\head_view', $data)
-            .view('include\\nav_view')
-            .view('borrows_list_view', $data)
-            .view('include\\foot_view');
+            . view('include\\nav_view')
+            . view('borrows_list_view', $data)
+            . view('include\\foot_view');
     }
 
     public function create($equipmentId = null)
@@ -166,7 +174,8 @@ class Borrowing extends BaseController {
             try {
                 $em = new \App\Models\EquipmentModel();
                 $row = $em->find($equipmentId);
-                if ($row) $equipmentItem = $em->normalize($row);
+                if ($row)
+                    $equipmentItem = $em->normalize($row);
             } catch (\Throwable $e) {
                 $equipmentItem = null;
             }
@@ -174,7 +183,7 @@ class Borrowing extends BaseController {
 
         $usermodel = model('Users_model');
         $users = [];
-        try{
+        try {
             $users = $usermodel->findAll();
         } catch (\Exception $e) {
             $users = [];
@@ -206,15 +215,61 @@ class Borrowing extends BaseController {
         ];
 
         return view('include\\head_view', $data)
-            .view('include\\nav_view')
-            .view('borrow_form_view', $data)
-            .view('include\\foot_view');
+            . view('include\\nav_view')
+            . view('borrow_form_view', $data)
+            . view('include\\foot_view');
     }
 
     public function submit()
     {
         $this->ensureBorrowData();
         $session = session();
+
+        // VALIDATION RULES
+        $rules = [
+            'equipment_id' => 'required|integer',
+            'user_id' => 'required|integer',
+            'borrower_name' => 'required',
+            'id_number' => 'required|numeric',
+            // NOTE: The 'isTodayOrFuture' rule must be defined in your Validation config
+            'due_date' => 'required|valid_date|isTodayOrFuture',
+            'use_location' => 'required|min_length[3]',
+        ];
+
+        // MESSAGES
+        $messages = [
+            'equipment_id' => [
+                'required' => 'Please select equipment.',
+            ],
+            'user_id' => [
+                'required' => 'Please select a borrower.',
+            ],
+            'borrower_name' => [
+                'required' => 'Borrower name is required.',
+                'min_length' => 'Borrower name must be at least 3 characters.'
+            ],
+            'id_number' => [
+                'required' => 'ID Number is required.',
+                'numeric' => 'ID Number must contain digits only.'
+            ],
+            'due_date' => [
+                'required' => 'A due date is required.',
+                'valid_date' => 'Invalid date format.',
+                'isTodayOrFuture' => 'Due date must be today or a future date.'
+            ],
+            'use_location' => [
+                'regex_match' => 'Location may only contain letters, numbers, spaces, or dashes.'
+            ],
+        ];
+
+        if (!$this->validate($rules, $messages)) {
+            // This is the correct way to pass validation errors to the next request (the view)
+            return redirect()->back()->withInput()->with('validation', $this->validator);
+        }
+
+        // ----------------------------
+        // Validation Passed — Proceed
+        // ----------------------------
 
         $equipmentId = (int) $this->request->getPost('equipment_id');
         $user_id = $this->request->getPost('user_id');
@@ -227,21 +282,9 @@ class Borrowing extends BaseController {
         $borrows = $session->get('borrows') ?? [];
         $next = $session->get('borrows_next_id');
 
-        // build human-friendly borrow ref like BR-2025-001
+        // build ref number BR-YYYY-###
         $year = date('Y');
         $ref = sprintf('BR-%s-%03d', $year, $next);
-
-        // if a user_id is provided, try to pull their details
-        if (! empty($user_id)) {
-            $usermodel = model('Users_model');
-            $u = $usermodel->find($user_id);
-            if ($u) {
-                $borrower_name = $u['fullname'] ?: $u['username'];
-                $borrower_email = $u['email'] ?? $borrower_email;
-                $extras = $session->get('user_extras') ?? [];
-                $id_number = $extras[$user_id]['id_number'] ?? $id_number;
-            }
-        }
 
         $record = [
             'id' => $next,
@@ -260,23 +303,28 @@ class Borrowing extends BaseController {
         $session->set('borrows', $borrows);
         $session->set('borrows_next_id', $next + 1);
 
-        // Try to update the equipment status to 'Borrowed' in the DB so the
-        // change is visible immediately in the Equipment list and other users.
+        // Update DB equipment status → Borrowed
         try {
-            if (! empty($equipmentId)) {
+            if (!empty($equipmentId)) {
                 $em = new \App\Models\EquipmentModel();
-                $update = ['status' => 'Borrowed', 'last_updated' => date('Y-m-d H:i:s')];
-                if (! empty($use_location)) $update['location'] = $use_location;
+                $update = [
+                    'status' => 'Borrowed',
+                    'last_updated' => date('Y-m-d H:i:s'),
+                ];
+                if (!empty($use_location))
+                    $update['location'] = $use_location;
+
                 $em->update($equipmentId, $update);
             }
         } catch (\Throwable $e) {
-            // ignore DB update errors; borrow record still exists in session
+            // ignore DB failures
         }
 
-        // After creating the borrow, go back to the Borrowing index so the user
-        // sees the newly-created borrow in the list.
+        $session->setFlashdata('success', 'Borrow record created successfully.');
+
         return redirect()->to('borrowing');
     }
+
 
     public function return($id)
     {
@@ -284,7 +332,7 @@ class Borrowing extends BaseController {
         $session = session();
         $borrows = $session->get('borrows') ?? [];
         $history = $session->get('borrow_history') ?? [];
-        $id = (int)$id;
+        $id = (int) $id;
         if (isset($borrows[$id])) {
             $equipmentId = $borrows[$id]['equipment_id'];
             // move to history
@@ -296,7 +344,7 @@ class Borrowing extends BaseController {
             // Also try to update the equipment status back to 'Available' in DB
             // and set its location back to the central ITSO location.
             try {
-                if (! empty($equipmentId)) {
+                if (!empty($equipmentId)) {
                     $em = new \App\Models\EquipmentModel();
                     $em->update($equipmentId, [
                         'status' => 'Available',
@@ -342,9 +390,9 @@ class Borrowing extends BaseController {
         ];
 
         return view('include\\head_view', $data)
-            .view('include\\nav_view')
-            .view('returns_view', $data)
-            .view('include\\foot_view');
+            . view('include\\nav_view')
+            . view('returns_view', $data)
+            . view('include\\foot_view');
     }
 
     // show process returns page (select multiple and return)
@@ -357,9 +405,9 @@ class Borrowing extends BaseController {
         $data = ['title' => 'Process Returns', 'borrows' => $borrows];
 
         return view('include\\head_view', $data)
-            .view('include\\nav_view')
-            .view('borrow_process_view', $data)
-            .view('include\\foot_view');
+            . view('include\\nav_view')
+            . view('borrow_process_view', $data)
+            . view('include\\foot_view');
     }
 
     public function processSubmit()
@@ -367,7 +415,8 @@ class Borrowing extends BaseController {
         $this->ensureBorrowData();
         $session = session();
         $selected = $this->request->getPost('selected') ?? [];
-        if (! is_array($selected)) $selected = [$selected];
+        if (!is_array($selected))
+            $selected = [$selected];
 
         foreach ($selected as $sid) {
             $this->return($sid);
@@ -376,5 +425,3 @@ class Borrowing extends BaseController {
         return redirect()->to('borrowing');
     }
 }
-
-?>
