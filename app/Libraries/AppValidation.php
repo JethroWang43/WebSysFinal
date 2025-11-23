@@ -1,100 +1,76 @@
 <?php
+
 namespace App\Libraries;
 
-use App\Models\EquipmentModel;
-use App\Models\Users_model;
+use CodeIgniter\I18n\Time;
 
+/**
+ * Custom Validation Rules for the application.
+ * Contains the logic for the 'isTodayOrFuture' and 'validTime' rules.
+ *
+ * NOTE: For these rules to work, this class must be registered in
+ * app/Config/Validation.php in the $ruleSets array.
+ */
 class AppValidation
 {
     /**
-     * Checks if the equipment exists and is 'Available'.
-     * Signature updated to accept 5 arguments to force the correct CI validation call.
+     * Validates if a given date string is today's date or a future date.
+     * (Rule: isTodayOrFuture)
+     *
+     * @param string|null $str The date string input from the form (e.g., 'YYYY-MM-DD').
+     * @return bool True if the date is today or later.
      */
-    public function is_available(string $str, string $param, array $data, ?string &$error = null, ?string $originalField = null): bool
+    public function isTodayOrFuture(string $str = null): bool
     {
-        // $str is the value of the 'equipment_id' field being validated
-        $equipmentId = $str;
-        if (empty($equipmentId)) {
-            // Let the 'required' rule handle this.
-            return true;
-        }
-
-        $model = new EquipmentModel();
-        $equipment = $model->find($equipmentId);
-
-        // Check if equipment exists AND its status is 'Available' (case-insensitive)
-        if ($equipment !== null && strtolower($equipment['status'] ?? '') === 'available') {
-            return true;
-        }
-
-        // Set error message
-        if ($error === null) {
-            $error = 'The selected equipment is not currently available for borrowing.';
-        }
-        return false;
-    }
-
-    /**
-     * Checks if the equipment ID exists in the database.
-     * Signature updated to accept 5 arguments.
-     */
-    public function is_existing_equipment(string $str, string $param, array $data, ?string &$error = null, ?string $originalField = null): bool
-    {
-        $equipmentId = $str; // Use $str directly
-
-        if (empty($equipmentId)) {
-            return true;
-        }
-
-        $model = new EquipmentModel();
-        if ($model->find($equipmentId) !== null) {
-            return true;
-        }
-
-        // Set error message
-        if ($error === null) {
-            $error = 'The selected equipment ID does not exist.';
-        }
-        return false;
-    }
-
-    /**
-     * Checks if the user ID exists in the database.
-     * Signature updated to accept 5 arguments.
-     */
-    public function is_existing_user(string $str, string $param, array $data, ?string &$error = null, ?string $originalField = null): bool
-    {
-        $userId = $str;
-        if (empty($userId)) {
-            return true;
-        }
-
-        $model = model('Users_model');
-        if ($model->find($userId) !== null) {
-            return true;
-        }
-
-        // Set error message
-        if ($error === null) {
-            $error = 'The selected user ID does not exist.';
-        }
-        return false;
-    }
-
-    /**
-     * Checks if a date is today or in the future. (Requires only 2 arguments)
-     */
-    public function after_today(string $str, ?string &$error = null): bool
-    {
-        $date = strtotime($str);
-        $today = strtotime('today');
-
-        if ($date < $today) {
-            if ($error !== null) {
-                $error = 'The {field} must be today or a future date.';
-            }
+        if (empty($str)) {
+            // Let the 'required' rule handle empty or missing fields.
             return false;
         }
-        return true;
+
+        try {
+            // 1. Parse the input string into a CodeIgniter Time object
+            $inputDate = Time::parse($str);
+
+            // 2. Get today's date and set the time to midnight (00:00:00)
+            $today = Time::now()->setTime(0, 0, 0);
+
+            // 3. Set the input date's time to midnight as well for accurate day-level comparison
+            $inputDate->setTime(0, 0, 0);
+
+            // 4. Check if the input date is greater than or equal to today's date.
+            return $inputDate->getTimestamp() >= $today->getTimestamp();
+        } catch (\Exception $e) {
+            // Log error or handle exception if date parsing fails
+            return false;
+        }
+    }
+
+    /**
+     * Validates if a string is a valid 24-hour time format (HH:MM or HH:MM:SS).
+     * This is the missing rule definition.
+     * (Rule: valid_time)
+     *
+     * @param string|null $str The time string input (e.g., '14:30' or '09:00:00').
+     * @return bool True if the time format is valid.
+     */
+    public function validTime(string $str = null): bool
+    {
+        if (empty($str)) {
+            // Use 'required' to check for emptiness
+            return false;
+        }
+
+        // Regex for HH:MM (00:00 to 23:59)
+        if (preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $str)) {
+            return true;
+        }
+
+        // Regex for HH:MM:SS (00:00:00 to 23:59:59)
+        if (preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/', $str)) {
+            return true;
+        }
+
+        // Failed to match standard time formats
+        return false;
     }
 }
