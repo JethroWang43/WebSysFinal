@@ -20,9 +20,11 @@ class EquipmentModel extends Model
 
     // 👇 ADD THESE LINES 👇
     protected $validationRules = [
+        // Allow the primary key to be present during update placeholder resolution
+        'idequipment' => 'permit_empty',
         'equipment_id' => 'permit_empty|is_unique[tbequipment.equipment_id,idequipment,{idequipment}]',
         'name' => 'required|min_length[3]|max_length[255]',
-        'description' => 'required|min_length[3]',
+        'description' => 'permit_empty',
         'category' => 'required|in_list[laptops,dlp,hdmi_cable,vga_cable,dlp_remote,keyboard_mouse,wacom,speaker_sets,webcams,extension_cords,cable_crimping_tools,cable_testers,lab_room_keys,other]',
         'status' => 'required|in_list[Available,Borrowed,Maintenance,Reserved]',
         'location' => 'required|max_length[255]',
@@ -37,7 +39,6 @@ class EquipmentModel extends Model
             'min_length' => 'The Equipment Name must be at least 3 characters long.'
         ],
         'description' => [
-            'required' => 'The Description is required.',
             'min_length' => 'The Description must be at least 3 characters long.'
         ],
         'category' => [

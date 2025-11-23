@@ -53,9 +53,10 @@
         <div class="mb-3">
             <label class="form-label">Status</label>
             <select class="form-select" name="status">
-                <option <?= $item['status'] === 'Available' ? 'selected' : '' ?>>Available</option>
-                <option <?= $item['status'] === 'Borrowed' ? 'selected' : '' ?>>Borrowed</option>
-                <option <?= $item['status'] === 'Maintenance' ? 'selected' : '' ?>>Maintenance</option>
+                <option value="Available" <?= $item['status'] === 'Available' ? 'selected' : '' ?>>Available</option>
+                <option value="Borrowed" <?= $item['status'] === 'Borrowed' ? 'selected' : '' ?>>Borrowed</option>
+                <option value="Maintenance" <?= $item['status'] === 'Maintenance' ? 'selected' : '' ?>>Maintenance</option>
+                <option value="Reserved" <?= $item['status'] === 'Reserved' ? 'selected' : '' ?>>Reserved</option>
             </select>
         </div>
         <div class="mb-3">

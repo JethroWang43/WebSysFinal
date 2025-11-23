@@ -230,7 +230,23 @@ class Equipment extends BaseController
             return redirect()->to('equipment/edit/' . $id)->withInput();
         }
 
-        $this->model->update($id, $data);
+        // Provide the primary key in the data so model validation
+        // placeholders like {idequipment} can be resolved during update.
+        $data['idequipment'] = $id;
+
+        $result = $this->model->update($id, $data);
+
+        // If model-level validation or update failed, show errors and return to edit
+        if ($result === false) {
+            $errors = $this->model->errors() ?: ['Unable to update equipment.'];
+            // Log the errors for debugging
+            if (function_exists('log_message')) {
+                log_message('error', 'Equipment update failed: ' . json_encode($errors));
+            }
+            session()->setFlashdata('errors', $errors);
+            return redirect()->to('equipment/edit/' . $id)->withInput();
+        }
+
         session()->setFlashdata('success', 'Equipment updated successfully.');
 
         return redirect()->to('equipment');
